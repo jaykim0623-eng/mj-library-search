@@ -214,7 +214,7 @@
 </main>
 
 <footer class="note">
-  이 목록은 관리사무소 도서 등록 시스템과 실시간으로 연동됩니다. 대출/반납은 관리사무소에 문의해주세요.
+  이 목록은 문정래미안 작은 도서관 도서 등록 시스템과 실시간으로 연동됩니다. 대출/반납은 문정래미안 작은 도서관에 문의해주세요.
 </footer>
 
 <div id="modalOverlay" class="modal-overlay">
@@ -284,7 +284,7 @@
     const grid = $('grid');
     if(list.length === 0){
       grid.style.display = 'none';
-      setStatus('검색 결과가 없어요. 다른 검색어로 찾아보시거나, 관리사무소에 신간 등록을 요청해보세요.');
+      setStatus('검색 결과가 없어요. 다른 검색어로 찾아보시거나, 문정래미안 작은 도서관에 신간 등록을 요청해보세요.');
       return;
     }
     setStatus('');
@@ -330,7 +330,7 @@
       complete: function(results){
         allBooks = (results.data || []).filter(r => r['도서명']);
         if(allBooks.length === 0){
-          setStatus('아직 등록된 책이 없어요. 관리사무소에서 곧 채워질 예정이에요!');
+          setStatus('아직 등록된 책이 없어요. 문정래미안 작은 도서관에서 곧 채워질 예정이에요!');
           return;
         }
         render();
