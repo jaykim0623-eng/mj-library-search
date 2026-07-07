@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>문정래미안 작은도서관 · 책 찾기</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Jua&family=Nanum+Gothic+Coding:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<style>
+  :root{
+    --cloud:#F5F3FF;
+    --ink:#2B2A4C;
+    --ink-soft:#6E6B96;
+    --paper:#FFFFFF;
+    --marigold:#FFB627;
+    --leaf:#46B98C;
+    --berry:#EF5D77;
+    --violet:#6C63FF;
+    --ring: rgba(108,99,255,0.25);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 8% -6%, rgba(255,182,39,0.16), transparent 40%),
+      radial-gradient(circle at 100% 0%, rgba(108,99,255,0.14), transparent 45%),
+      var(--cloud);
+    color:var(--ink);
+    font-family:'Pretendard', -apple-system, sans-serif;
+    min-height:100vh;
+    padding-bottom:60px;
+  }
+  .wrap{max-width:980px;margin:0 auto;padding:0 18px;}
+
+  header.top{padding:38px 18px 18px;max-width:980px;margin:0 auto;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand .badge{
+    width:46px;height:46px;border-radius:14px;
+    background:linear-gradient(135deg, var(--marigold), var(--berry));
+    display:flex;align-items:center;justify-content:center;
+    font-size:22px;flex:none;
+    box-shadow:0 6px 14px -6px rgba(239,93,119,0.55);
+  }
+  .brand h1{
+    font-family:'Jua', sans-serif;
+    font-size:26px;
+    margin:0;
+    color:var(--ink);
+    letter-spacing:-0.01em;
+  }
+  .brand p{margin:2px 0 0;font-size:13px;color:var(--ink-soft);}
+
+  .search-row{margin-top:22px;position:relative;}
+  #searchInput{
+    width:100%;
+    font-family:'Pretendard',sans-serif;
+    font-size:16px;
+    padding:16px 20px 16px 50px;
+    border-radius:999px;
+    border:2px solid transparent;
+    background:var(--paper) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="%236E6B96" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>') no-repeat 18px center;
+    background-size:20px;
+    box-shadow:0 10px 24px -14px rgba(43,42,76,0.35);
+    color:var(--ink);
+  }
+  #searchInput:focus{outline:none;border-color:var(--violet);box-shadow:0 0 0 5px var(--ring);}
+
+  .chip-row{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;}
+  .chip{
+    font-family:'Pretendard',sans-serif;font-size:13.5px;font-weight:600;
+    padding:8px 16px;border-radius:999px;border:1.5px solid #E3E0F7;
+    background:var(--paper);color:var(--ink-soft);cursor:pointer;
+    transition:all .15s ease;
+  }
+  .chip.active{background:var(--ink);border-color:var(--ink);color:#fff;}
+  .chip:hover{border-color:var(--violet);}
+
+  .legend{
+    display:flex;gap:14px;flex-wrap:wrap;
+    margin-top:18px;padding:12px 16px;
+    background:rgba(255,255,255,0.6);border-radius:14px;
+    font-size:12.5px;color:var(--ink-soft);
+  }
+  .legend .item{display:flex;align-items:center;gap:6px;}
+  .legend .dot{width:10px;height:10px;border-radius:50%;flex:none;}
+
+  main{max-width:980px;margin:0 auto;padding:22px 18px 0;}
+
+  .status-msg{
+    text-align:center;padding:60px 20px;color:var(--ink-soft);
+    font-family:'Jua',sans-serif;font-size:16px;line-height:1.7;
+  }
+  .status-msg button{
+    margin-top:14px;font-family:'Pretendard',sans-serif;font-weight:600;
+    padding:9px 18px;border-radius:999px;border:none;
+    background:var(--violet);color:#fff;cursor:pointer;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(148px, 1fr));
+    gap:16px;
+  }
+  .card{
+    background:var(--paper);border-radius:16px;overflow:hidden;
+    box-shadow:0 8px 20px -14px rgba(43,42,76,0.4);
+    display:flex;flex-direction:column;
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .card:hover{transform:translateY(-3px);box-shadow:0 14px 26px -14px rgba(43,42,76,0.5);}
+  .cover-wrap{position:relative;aspect-ratio:3/4;background:#EDEAFB;overflow:hidden;}
+  .cover-wrap img{width:100%;height:100%;object-fit:cover;display:block;}
+  .cover-fallback{
+    width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+    font-size:34px;color:#C9C3F0;
+  }
+  .status-pill{
+    position:absolute;top:8px;right:8px;
+    font-size:10.5px;font-weight:700;padding:4px 9px;border-radius:999px;
+    color:#fff;
+  }
+  .status-pill.avail{background:var(--leaf);}
+  .status-pill.out{background:var(--berry);}
+
+  .card-body{padding:10px 12px 12px;display:flex;flex-direction:column;gap:4px;flex:1;}
+  .card-title{
+    font-size:13.5px;font-weight:700;line-height:1.35;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  }
+  .card-author{font-size:11.5px;color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .card-meta{
+    margin-top:auto;display:flex;align-items:center;gap:6px;
+    font-family:'Nanum Gothic Coding',monospace;font-size:10.5px;color:var(--ink-soft);
+  }
+  .card-meta .shelf-dot{width:8px;height:8px;border-radius:50%;flex:none;}
+
+  footer.note{
+    max-width:980px;margin:34px auto 0;padding:0 18px;
+    color:var(--ink-soft);font-size:12px;text-align:center;
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="brand">
+    <div class="badge">📚</div>
+    <div>
+      <h1>문정래미안 작은도서관</h1>
+      <p>입주민이 함께 만드는 우리 동네 책장</p>
+    </div>
+  </div>
+
+  <div class="search-row">
+    <input type="text" id="searchInput" placeholder="책 제목이나 저자로 검색해보세요" />
+  </div>
+
+  <div class="chip-row" id="chipRow">
+    <button class="chip active" data-filter="all">전체</button>
+    <button class="chip" data-filter="avail">대출 가능만</button>
+  </div>
+
+  <div class="legend" id="legend"></div>
+</header>
+
+<main>
+  <div id="statusArea"></div>
+  <div class="grid" id="grid" style="display:none;"></div>
+</main>
+
+<footer class="note">
+  이 목록은 관리사무소 도서 등록 시스템과 실시간으로 연동됩니다. 대출/반납은 관리사무소에 문의해주세요.
+</footer>
+
+<script>
+(function(){
+  const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQhssvjwvvyc2rmUZMPvwW7oEMxwYJio71BtWtJ3gC2u0CQu4LoQF1L9CDA5_Zl2wc9zmKKLfUf-BDQ/pub?gid=0&single=true&output=csv";
+
+  const SHELF_COLORS = {
+    'A': { color: 'var(--marigold)', hex:'#FFB627', label: 'A서가 · 총류/철학/종교' },
+    'B': { color: 'var(--leaf)', hex:'#46B98C', label: 'B서가 · 사회/자연/기술과학' },
+    'C': { color: 'var(--berry)', hex:'#EF5D77', label: 'C서가 · 예술/언어/문학' },
+    'D': { color: 'var(--violet)', hex:'#6C63FF', label: 'D서가 · 역사' },
+  };
+
+  let allBooks = [];
+  let currentFilter = 'all';
+
+  const $ = (id) => document.getElementById(id);
+
+  function renderLegend(){
+    const legend = $('legend');
+    legend.innerHTML = Object.values(SHELF_COLORS).map(s => `
+      <div class="item"><span class="dot" style="background:${s.hex};"></span>${s.label}</div>
+    `).join('');
+  }
+
+  function shelfKey(location){
+    if(!location) return null;
+    const ch = location.trim().charAt(0);
+    return SHELF_COLORS[ch] ? ch : null;
+  }
+
+  function escapeHtml(s){
+    return String(s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  function setStatus(html){
+    $('statusArea').innerHTML = html ? `<div class="status-msg">${html}</div>` : '';
+  }
+
+  function render(){
+    const q = $('searchInput').value.trim().toLowerCase();
+    let list = allBooks.filter(b => {
+      if(currentFilter === 'avail' && b['대출상태'] !== '대출가능') return false;
+      if(!q) return true;
+      return (b['도서명']||'').toLowerCase().includes(q)
+        || (b['저자']||'').toLowerCase().includes(q)
+        || (b['청구기호(저자기호)']||'').toLowerCase().includes(q)
+        || (b['분류기호(KDC)']||'').toLowerCase().includes(q);
+    });
+
+    const grid = $('grid');
+    if(list.length === 0){
+      grid.style.display = 'none';
+      setStatus('검색 결과가 없어요. 다른 검색어로 찾아보시거나, 관리사무소에 신간 등록을 요청해보세요.');
+      return;
+    }
+    setStatus('');
+    grid.style.display = 'grid';
+
+    grid.innerHTML = list.map(b => {
+      const isAvail = b['대출상태'] === '대출가능';
+      const shelf = shelfKey(b['서가위치']);
+      const shelfColor = shelf ? SHELF_COLORS[shelf].hex : '#C9C3F0';
+      const cover = b['표지이미지URL'];
+      const coverHtml = cover
+        ? `<img src="${escapeHtml(cover)}" alt="" loading="lazy" onerror="this.parentElement.innerHTML='<div class=&quot;cover-fallback&quot;>📖</div>'" />`
+        : `<div class="cover-fallback">📖</div>`;
+      return `
+        <div class="card">
+          <div class="cover-wrap">
+            ${coverHtml}
+            <span class="status-pill ${isAvail ? 'avail' : 'out'}">${isAvail ? '대출가능' : '대출중'}</span>
+          </div>
+          <div class="card-body">
+            <div class="card-title">${escapeHtml(b['도서명'])}</div>
+            <div class="card-author">${escapeHtml(b['저자']||'')}</div>
+            <div class="card-meta">
+              <span class="shelf-dot" style="background:${shelfColor};"></span>
+              <span>${escapeHtml(b['서가위치']||'위치 미정')}</span>
+              <span>·</span>
+              <span>${escapeHtml(b['분류기호(KDC)']||'')} ${escapeHtml(b['청구기호(저자기호)']||'')}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    }).join('');
+  }
+
+  function loadData(){
+    setStatus('책장을 정리하는 중이에요...');
+    $('grid').style.display = 'none';
+    Papa.parse(CSV_URL, {
+      download: true,
+      header: true,
+      skipEmptyLines: true,
+      complete: function(results){
+        allBooks = (results.data || []).filter(r => r['도서명']);
+        if(allBooks.length === 0){
+          setStatus('아직 등록된 책이 없어요. 관리사무소에서 곧 채워질 예정이에요!');
+          return;
+        }
+        render();
+      },
+      error: function(err){
+        setStatus(`책 목록을 불러오지 못했어요. 인터넷 연결을 확인하고 다시 시도해주세요.<br><button onclick="location.reload()">다시 시도</button>`);
+      }
+    });
+  }
+
+  $('searchInput').addEventListener('input', render);
+  document.querySelectorAll('#chipRow .chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      document.querySelectorAll('#chipRow .chip').forEach(c=>c.classList.remove('active'));
+      chip.classList.add('active');
+      currentFilter = chip.dataset.filter;
+      render();
+    });
+  });
+
+  renderLegend();
+  loadData();
+})();
+</script>
+</body>
+</html>
